@@ -1,15 +1,8 @@
 "use client";
 import { SearchResponse } from "@/models/SearchResponse";
 import { fetchDataProvider } from "@/utils/api_provider";
-import dynamic from "next/dynamic";
-import { useEffect, useRef, useState } from "react";
-
-const CityHealthWidget = dynamic(
-  () => import("city-health").then((mod) => mod.CityHealthWidget),
-  {
-    ssr: false,
-  }
-);
+import { CityHealthWidget } from "city-health";
+import { useEffect, useState, useTransition } from "react";
 
 interface Props {
   initialResponse: SearchResponse;
@@ -17,50 +10,46 @@ interface Props {
 }
 
 export default function CityHealthContainer(props: Props) {
-  const [city, setCity] = useState(props.initialCity);
-  const [results, setResults] = useState<SearchResponse>(props.initialResponse);
-  const [loading, setLoading] = useState(false);
-
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [city, setCity] = useState("");
+  // const [suggestions, setSuggestions] = useState();
+  const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    if (city.trim().length > 0) {
+      const controller = new AbortController();
+      const delayDebounceFn = setTimeout(() => {
+        startTransition(async () => {
+          try {
+            const res = await fetchDataProvider(
+              "monitoring/citta/sites/autocomplete?query=brescia&page_size=23",
+              controller.signal
+            );
 
-    timeoutRef.current = setTimeout(async () => {
-      setLoading(true);
-      try {
-        const res = await fetchDataProvider<SearchResponse>(
-          "monitoring/citta/sites/249/clc_layer/49121/49120/kpi"
-        );
-
-        setResults(res);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    }, 300);
-
-    return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    };
+            console.log(res);
+          } catch (err) {
+            console.error(err);
+          }
+        });
+      }, 500);
+      return () => clearTimeout(delayDebounceFn);
+    }
   }, [city]);
+
+  console.log("ciao");
 
   return (
     <div className="bg-white">
-      {loading ? (
-        <div>Loading...</div>
-      ) : (
-        <CityHealthWidget
-          autocompletePanel={<></>}
-          city={city}
-          onChange={(val) => {
-            setCity(val);
-          }}
-          searchResponse={results}
-          value=""
-        />
-      )}
+      <CityHealthWidget
+        autocompletePanel={
+          isPending ? <div className="absolute">Loading...</div> : <></>
+        }
+        city={props.initialCity}
+        onChange={(val) => {
+          setCity(val);
+        }}
+        searchResponse={props.initialResponse}
+        value={city}
+      />
     </div>
   );
 }

@@ -1,9 +1,15 @@
 import { HTTPValidationError } from "@/models/errors";
 
-export async function fetchDataProvider<T = unknown>(path: string): Promise<T> {
+export async function fetchDataProvider<T = unknown>(
+  path: string,
+  signal?: AbortSignal
+): Promise<T> {
   try {
     const res = await fetch(
-      `https://xl6720lqti.execute-api.eu-central-1.amazonaws.com/production/v1/${path}`
+      `https://xl6720lqti.execute-api.eu-central-1.amazonaws.com/production/v1/${path}`,
+      {
+        signal,
+      }
     );
 
     if (res.ok) {

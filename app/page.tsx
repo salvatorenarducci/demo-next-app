@@ -7,6 +7,7 @@ import { notFound } from "next/navigation";
 export default async function Home() {
   try {
     const results = await getCityHealthData();
+
     return (
       <div className="bg-white h-screen px-16">
         <CityHealthContainer initialCity="Milano" initialResponse={results} />
