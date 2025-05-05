@@ -1,4 +1,4 @@
-import { SearchResponse } from "@/models/SearchResponse";
+import { SearchResponse } from "@/models/searchResponse";
 import { fetchDataProvider } from "@/utils/api_provider";
 
 export async function getCityHealthData(): Promise<SearchResponse> {

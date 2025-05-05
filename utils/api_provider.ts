@@ -25,8 +25,19 @@ export async function fetchDataProvider<T = unknown>(
       throw new HTTPValidationError(errorBody.detail || []);
     }
 
-    throw new Error("Unexpected server error");
+    const errorText = await res.text();
+    throw new Error(`Unexpected server error: ${res.status} - ${errorText}`);
   } catch (error) {
+    console.log(error);
+
     throw error;
   }
+}
+
+export function getErrorMessage(error: unknown): string {
+  if (error instanceof HTTPValidationError) {
+    return error.detail.map((err) => err.msgstring).join(", ");
+  }
+  if (error instanceof Error) return error.message;
+  return String(error);
 }
